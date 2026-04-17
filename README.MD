@@ -67,6 +67,11 @@ print(replaced_count)  # 2
             <td>Building of an automaton (M is the total length of keys) and linear search. Optimal for a large number of keys.</td>
         </tr>
         <tr>
+            <td><i>aho_corasick_с</i></td>
+            <td><b>O(L + M)</b></td>
+            <td>AhoCorasick C wrapper (https://pypi.org/project/pyahocorasick). Optimal for a large number of keys.</td>
+        </tr>
+        <tr>
             <td colspan="3"><b>L</b> - length of the string, <b>K</b> - number of keys</td>
         </tr>
     </tbody>
