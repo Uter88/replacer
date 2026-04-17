@@ -15,7 +15,7 @@ python3 -m main datasets/config_simple.txt datasets/sample_simple.txt --method a
 - **config.txt** – file with key=value pairs (each pair on a new line, order determines priority).
 - **sample.txt**  – file with replacement text (line-by-line processing).
 - **--method** – replacement method:
-    - **cascading** – cascading replacement (each key is applied to the result of the previous one).
+    - **cascading** – cascading replacement (each key is applied to the result of the previous one). Defaults.
     - **single_pass** – single-pass search of keys for each position.
     - **regexp – single** regular expression with alternatives.
     - **aho_corasick** – Aho-Corasick algorithm (recommended for large numbers of keys).
