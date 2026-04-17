@@ -6,6 +6,11 @@ from .type_defs import Replacements, ReplaceResult
 class RegexpReplacer:
     """Regular expression string replacer.
 
+    Effective on small and middle datasets.
+
+    Complexity:
+        O(N): where N = len(line)
+
     Attributes:
         pattern (re.Pattern): Compiled regexp pattern from replacements pairs.
         replacements (Replacements): Replacements pairs.
@@ -15,6 +20,14 @@ class RegexpReplacer:
     replacements: Replacements
 
     def __init__(self, replacements: Replacements):
+        """Constructor.
+        If no replacements - compile a regular expression that will never work.
+        Otherwise compile regular expression from escaped replacements keys.
+
+        Args:
+            replacements (Replacements): _description_
+        """
+
         if not replacements:
             self.pattern = re.compile(r"(?!)")
         else:
@@ -27,15 +40,15 @@ class RegexpReplacer:
         """
         Apply regular expression replacements.
 
-        Complexity:
-            O(N) where N = len(line).
-
         Args:
             line (str): Line to replace.
 
         Returns:
             ReplaceResult: Replaced line and replacing count.
         """
+
+        if not line or not self.replacements:
+            return line, 0
 
         replaced_chars = 0
 
@@ -45,9 +58,9 @@ class RegexpReplacer:
             replaced_chars += len(key)
             return self.replacements[key]
 
-        new_s = self.pattern.sub(repl, line)
+        replaced_line = self.pattern.sub(repl, line)
 
-        return (new_s, replaced_chars)
+        return replaced_line, replaced_chars
 
     def __call__(self, line: str, _: Replacements) -> ReplaceResult:
         """Call apply"""

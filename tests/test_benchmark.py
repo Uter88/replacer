@@ -10,6 +10,7 @@ from replacers import (
     single_pass_replacer,
     RegexpReplacer,
     AhoCorasickReplacer,
+    AhoCorasickReplacerC,
     Replacements,
     Replacer,
     ReplaceMethod,
@@ -87,6 +88,7 @@ class BenchmarkReplacers(unittest.TestCase):
 
         return (
             (ReplaceMethod.AHO_CORASICK, AhoCorasickReplacer(replacements)),
+            (ReplaceMethod.AHO_CORASICK_C, AhoCorasickReplacerC(replacements)),
             (ReplaceMethod.REGEXP, RegexpReplacer(replacements)),
             (ReplaceMethod.SINGLE_PASS, single_pass_replacer),
             (ReplaceMethod.CASCADING, cascading_replacer),

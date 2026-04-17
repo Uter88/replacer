@@ -1,7 +1,52 @@
+import sys
 from collections import deque
-from typing import Dict, Optional, Deque, List, Tuple
+from typing import Dict, Optional, Deque, List, Tuple, Iterator
 
 from .type_defs import Replacements, ReplaceResult
+
+
+Matches = List[Tuple[int, int, int, str]]
+
+
+def select_matches(line: str, matches: Matches) -> ReplaceResult:
+    """Selecting non-overlapping matches based on priority.
+
+    Complexity:
+        O(K log K + N): where K = len(line), N = len(matches)
+
+    - Sort all found matches by their starting position,
+    and if they have the same starting position - by priority.
+
+    - Iterate through the sorted list and add to the result
+    only those matches that do not intersect with the previously selected one.
+    This ensures that the best non-intersecting key is selected at each position.
+
+    Args:
+        line (str): Line to replace.
+        matches (Matches): Matches lines.
+
+    Returns:
+        ReplaceResult: Replaced line and replacing count.
+    """
+
+    matches.sort(key=lambda x: (x[0], x[2]))
+
+    result_parts = []
+    replaced_chars = 0
+    last_end = -1
+
+    for start, end, _, value in matches:
+        if start > last_end:
+            if last_end + 1 <= start - 1:
+                result_parts.append(line[last_end + 1 : start])
+
+            result_parts.append(value)
+            replaced_chars += end - start + 1
+            last_end = end
+
+    result_parts.append(line[last_end + 1 :])
+
+    return "".join(result_parts), replaced_chars
 
 
 class Node:
@@ -40,12 +85,22 @@ class Node:
 class AhoCorasickReplacer:
     """Aho-Corasick replacement algorithm implementation.
 
+    Effective on large datasets.
+
     Links:
-        https://en.wikipedia.org/wiki/Aho-Corasick_algorithm.
-        https://pypi.org/project/pyahocorasick
+        https://en.wikipedia.org/wiki/Aho-Corasick_algorithm
+
+    Complexity:
+        O(L + M): where L = len(line), K = number of keys.
     """
 
     def __init__(self, replacements: Replacements):
+        """Init root node and build trie.
+
+        Args:
+            replacements (Replacements): Replacement pairs.
+        """
+
         self.root = Node()
         self._build(replacements)
 
@@ -80,11 +135,11 @@ class AhoCorasickReplacer:
         for priority, (key, value) in enumerate(replacements.items()):
             node = self.root
 
-            for ch in key:
-                if ch not in node.children:
-                    node.children[ch] = Node()
+            for symbol in key:
+                if symbol not in node.children:
+                    node.children[symbol] = Node()
 
-                node = node.children[ch]
+                node = node.children[symbol]
 
             is_higher_priority = (
                 node.output_priority == -1 or priority < node.output_priority
@@ -121,7 +176,7 @@ class AhoCorasickReplacer:
         """
 
         while queue:
-            current = queue.popleft()
+            current: Node = queue.popleft()
 
             if current.fail_link and current.fail_link.output_len > 0:
                 is_best_node = (
@@ -134,16 +189,16 @@ class AhoCorasickReplacer:
                     current.output_priority = current.fail_link.output_priority
                     current.output_value = current.fail_link.output_value
 
-            for ch, child in current.children.items():
-                f = current.fail_link
+            for symbol, child in current.children.items():
+                node = current.fail_link
 
-                while f is not None and ch not in f.children:
-                    f = f.fail_link
+                while node is not None and symbol not in node.children:
+                    node = node.fail_link
 
-                child.fail_link = self.root if f is None else f.children[ch]
+                child.fail_link = self.root if node is None else node.children[symbol]
                 queue.append(child)
 
-    def _gather_matches(self, line: str) -> List[Tuple[int, int, int, str]]:
+    def _gather_matches(self, line: str) -> Matches:
         """Gather matches.
 
         Complexity:
@@ -160,18 +215,18 @@ class AhoCorasickReplacer:
             line (str): Line to search matches.
 
         Returns:
-            List[Tuple[int, int, int, str]]: Start, end, priority, value.
+            Matches: Start, end, priority, value.
         """
 
-        matches = []
-        state = self.root
+        matches: Matches = []
+        state: Node = self.root
 
-        for i, ch in enumerate(line):
-            while state != self.root and ch not in state.children:
+        for i, symbol in enumerate(line):
+            while state != self.root and symbol not in state.children:
                 state = state.fail_link if state.fail_link is not None else self.root
 
-            if ch in state.children:
-                state = state.children[ch]
+            if symbol in state.children:
+                state = state.children[symbol]
             else:
                 state = self.root
 
@@ -180,48 +235,6 @@ class AhoCorasickReplacer:
                 matches.append((start, i, state.output_priority, state.output_value))
 
         return matches
-
-    def _select_matches(
-        self, line: str, matches: List[Tuple[int, int, int, str]]
-    ) -> ReplaceResult:
-        """Selecting non-overlapping matches based on priority.
-
-        Complexity:
-            O(K log K + N): where K = len(line), N = len(matches)
-
-        - Sort all found matches by their starting position,
-        and if they have the same starting position - by priority.
-
-        - Iterate through the sorted list and add to the result
-        only those matches that do not intersect with the previously selected one.
-        This ensures that the best non-intersecting key is selected at each position.
-
-        Args:
-            line (str): Line to replace.
-            matches (List[Tuple[int, int, int, str]]): Matches lines.
-
-        Returns:
-            ReplaceResult: Replaced line and replacing count.
-        """
-
-        matches.sort(key=lambda x: (x[0], x[2]))
-
-        result_parts = []
-        replaced_chars = 0
-        last_end = -1
-
-        for start, end, _, value in matches:
-            if start > last_end:
-                if last_end + 1 <= start - 1:
-                    result_parts.append(line[last_end + 1 : start])
-
-                result_parts.append(value)
-                replaced_chars += end - start + 1
-                last_end = end
-
-        result_parts.append(line[last_end + 1 :])
-
-        return "".join(result_parts), replaced_chars
 
     def apply(self, line: str) -> ReplaceResult:
         """Replaces all non-overlap keys to values.
@@ -234,10 +247,80 @@ class AhoCorasickReplacer:
         """
 
         if not line:
-            return "", 0
+            return line, 0
 
         matches = self._gather_matches(line)
-        replaced_line, replaced_chars = self._select_matches(line, matches)
+        replaced_line, replaced_chars = select_matches(line, matches)
+
+        return replaced_line, replaced_chars
+
+    def __call__(self, line: str, _: Replacements) -> ReplaceResult:
+        """Call apply replacing"""
+
+        return self.apply(line)
+
+
+class AhoCorasickReplacerC:
+    """Aho-Corasick replacement algorithm wrapper for pyahocorasick.
+
+    Effective on large datasets.
+
+    Links:
+        https://en.wikipedia.org/wiki/Aho-Corasick_algorithm
+        https://pypi.org/project/pyahocorasick
+
+    Complexity:
+        O(L + M): where L = len(line), K = number of keys.
+    """
+
+    def __init__(self, replacements: Replacements):
+        """Creates automaton and add replacements pairs.
+
+        Args:
+            replacements (Replacements): Replacements pairs.
+        """
+
+        try:
+            import ahocorasick
+        except ModuleNotFoundError:
+            print(
+                "Dependency ahocorasick not found. Try to install it via pip3 install ahocorasick",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        self.automaton = ahocorasick.Automaton()
+
+        for priority, (key, value) in enumerate(replacements.items()):
+            self.automaton.add_word(key, (priority, key, value))
+
+        self.automaton.make_automaton()
+
+    def _iterate(self, line: str) -> Iterator[Tuple[int, Tuple[int, str, str]]]:
+        """Automaton iterator wrapper"""
+
+        return self.automaton.iter(line)
+
+    def apply(self, line: str) -> ReplaceResult:
+        """Replaces all non-overlap keys to values.
+
+        Args:
+            line (str): Line to replace.
+
+        Returns:
+            ReplaceResult: Replaced line and replacing count.
+        """
+
+        if not line or not list(self.automaton.keys()):
+            return line, 0
+
+        matches: Matches = []
+
+        for end_index, (priority, key, value) in self.automaton.iter(line):
+            start_index = end_index - len(key) + 1
+            matches.append((start_index, end_index, priority, value))
+
+        replaced_line, replaced_chars = select_matches(line, matches)
 
         return replaced_line, replaced_chars
 

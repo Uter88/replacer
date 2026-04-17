@@ -7,6 +7,8 @@ def cascading_replacer(line: str, replacements: Replacements) -> ReplaceResult:
     This may lead to double-counting if a later rule replaces characters that were
     introduced by an earlier rule.
 
+    Effective on small and medium datasets.
+
     Complexity:
         O(K * L) where K = len(replacements), L = current line length.
         In the worst case, L can increase significantly, but the number of passes along the line will remain O(K).
@@ -18,6 +20,9 @@ def cascading_replacer(line: str, replacements: Replacements) -> ReplaceResult:
     Returns:
         ReplaceResult: Replaced line and replacing count.
     """
+
+    if not line or not replacements:
+        return line, 0
 
     total_replaced = 0
 

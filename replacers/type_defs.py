@@ -14,9 +14,11 @@ class ReplaceMethod(str, Enum):
         SINGLE_PASS: Single pass replacing.
         REGEXP: Regular expression replacing.
         AHO_CORASICK: Aho-Corasick algorithm replacing.
+        AHO_CORASICK_C: Aho-Corasick algorithm replacing on C.
     """
 
     CASCADING = "cascading"
     SINGLE_PASS = "single_pass"
     REGEXP = "regexp"
     AHO_CORASICK = "aho_corasick"
+    AHO_CORASICK_C = "aho_corasick_c"

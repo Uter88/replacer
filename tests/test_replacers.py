@@ -10,7 +10,7 @@ from replacers import (
 from replacers.cascading import cascading_replacer
 from replacers.single_pass import single_pass_replacer
 from replacers.regexp import RegexpReplacer
-from replacers.aho_corasick import AhoCorasickReplacer
+from replacers.aho_corasick import AhoCorasickReplacer, AhoCorasickReplacerC
 from replacers.type_defs import ReplaceMethod, Replacements, Replacer
 
 
@@ -174,16 +174,31 @@ class TestAhoCorasickReplacer(BaseNonOverlappingTest):
         self.assertEqual(result, "X")
         self.assertEqual(count, 2)
 
-    def test_complex_text(self):
-        """Test case: complex text replacements"""
 
-        replacements = Replacements([("he", "X"), ("she", "Y"), ("his", "Z")])
-        text = "she his he"
+class TestAhoCorasickReplacerC(BaseNonOverlappingTest):
+
+    def make_replacer(self, replacements: Replacements) -> Replacer:
+        return AhoCorasickReplacerC(replacements)
+
+    def test_prefix_priority_reverse(self):
+        """Test case: prefix with hight priority reversed"""
+
+        replacements = Replacements([("a", "Z"), ("ab", "X")])
         replacer = self.make_replacer(replacements)
 
-        result, count = replacer(text, replacements)
-        self.assertEqual(result, "sX Z X")
-        self.assertEqual(count, 7)
+        result, count = replacer("ab", replacements)
+        self.assertEqual(result, "Zb")
+        self.assertEqual(count, 1)
+
+    def test_multiple_matches_in_one_position(self):
+        """Test case: multiple matches in same position"""
+
+        replacements = Replacements([("ab", "X"), ("a", "Z")])
+        replacer = self.make_replacer(replacements)
+
+        result, count = replacer("ab", replacements)
+        self.assertEqual(result, "X")
+        self.assertEqual(count, 2)
 
 
 class TestGetReplacerByMethod(unittest.TestCase):

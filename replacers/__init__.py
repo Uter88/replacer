@@ -1,7 +1,7 @@
 from typing import Tuple, List, TextIO, Iterable
 import sys
 
-from .aho_corasick import AhoCorasickReplacer
+from .aho_corasick import AhoCorasickReplacer, AhoCorasickReplacerC
 from .cascading import cascading_replacer
 from .single_pass import single_pass_replacer
 from .regexp import RegexpReplacer
@@ -32,6 +32,9 @@ def get_replacer_by_method(
 
     if method == ReplaceMethod.AHO_CORASICK:
         return AhoCorasickReplacer(replacements)
+
+    if method == ReplaceMethod.AHO_CORASICK_C:
+        return AhoCorasickReplacerC(replacements)
 
     raise ValueError("Invalid replacer method")
 
@@ -92,6 +95,7 @@ __all__ = [
     "apply_replacing",
     "RegexpReplacer",
     "AhoCorasickReplacer",
+    "AhoCorasickReplacerC",
     "cascading_replacer",
     "single_pass_replacer",
     "ReplaceMethod",

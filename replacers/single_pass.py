@@ -6,6 +6,8 @@ from .type_defs import Replacements, ReplaceResult
 def single_pass_replacer(line: str, replacements: Replacements) -> ReplaceResult:
     """Apply replacements in a single left-to-right pass with non-overlapping matches.
 
+    It has low efficiency. It is recommended to use other methods.
+
     Complexity:
         O(L * K) where L = len(line), K = len(replacements).
         In the worst case checks each rule for each position.
@@ -18,8 +20,11 @@ def single_pass_replacer(line: str, replacements: Replacements) -> ReplaceResult
         ReplaceResult: Replaced line and replacing count.
     """
 
+    if not line or not replacements:
+        return line, 0
+
     i, n = 0, len(line)
-    result: List[str] = []
+    result_parts: List[str] = []
     total_replaced = 0
 
     while i < n:
@@ -27,14 +32,14 @@ def single_pass_replacer(line: str, replacements: Replacements) -> ReplaceResult
 
         for key, val in replacements.items():
             if line.startswith(key, i):
-                result.append(val)
+                result_parts.append(val)
                 total_replaced += len(key)
                 i += len(key)
                 matched = True
                 break
 
         if not matched:
-            result.append(line[i])
+            result_parts.append(line[i])
             i += 1
 
-    return "".join(result), total_replaced
+    return "".join(result_parts), total_replaced

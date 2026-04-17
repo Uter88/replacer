@@ -3,7 +3,7 @@ Performs a character replacement in strings according to the configuration key1=
 
 ## Requirements
 - Python >= 3.7 version (only stdlib used).
-
+- https://pypi.org/project/pyahocorasick (Optional, if use aho_corasick_c)
 
 ## Launch
 
@@ -12,13 +12,14 @@ Performs a character replacement in strings according to the configuration key1=
 python3 -m main datasets/config_simple.txt datasets/sample_simple.txt --method aho_corasick
 ```
 
-- **config.txt** – file with key=value pairs (each pair on a new line, order determines priority).
-- **sample.txt**  – file with replacement text (line-by-line processing).
+- **config** – file with key=value pairs (each pair on a new line, order determines priority).
+- **sample**  – file with replacement text (line-by-line processing).
 - **--method** – replacement method:
     - **cascading** – cascading replacement (each key is applied to the result of the previous one). Defaults.
     - **single_pass** – single-pass search of keys for each position.
     - **regexp – single** regular expression with alternatives.
     - **aho_corasick** – Aho-Corasick algorithm (recommended for large numbers of keys).
+    - **aho_corasick_c** – Aho-Corasick pyahocorasick (C) wrapper (the fastest implementation for large numbers of keys).
 
 The result is output to stdout: first the lines in which substitutions occurred (sorted by descending number of substitutions), then the unchanged lines.
 
@@ -74,9 +75,14 @@ print(replaced_count)  # 2
 
 ## Testing
 
+Make datasets:
+```bash
+python3 -m tests.make_datasets datasets/config.txt datasets/sample.txt --total_pairs 1000 --total_lines 1000
 ```
-bash
-python -m unittest discover tests
+
+Launch all tests:
+```bash
+python3 -m unittest discover tests
 ```
 The tests check:
 - Correctness of substitution (comparison of results between modes).
@@ -85,6 +91,67 @@ The tests check:
 - Working with the configuration file parser
 - Performance benchmark and comparison results between replacers.
 
+
+## Performance
+<table>
+    <caption>
+        <b>1000 lines and 1000 replacements pairs</b>
+    </caption>
+    <thead>
+        <tr>
+            <td>Replacer</d>
+            <td>Time (s)</d>
+            <td>Ratio(x)</d>
+            <td>Replaced chars</d>
+            <td>Replacements length</d>
+            <td>Text length</d>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>aho_corasick_c</td>
+            <td>0.004124</td>
+            <td>x1.00</td>
+            <td>4891</td>
+            <td>1000</td>
+            <td>1000</td>
+        </tr>
+        <tr>
+            <td>aho_corasick</td>
+            <td>0.017762</td>
+            <td>x4.31</td>
+            <td>4891</td>
+            <td>1000</td>
+            <td>1000</td>
+        </tr>
+        <tr>
+            <td>cascading</td>
+            <td>0.112779</td>
+            <td>x27.35</td>
+            <td>4885</td>
+            <td>1000</td>
+            <td>1000</td>
+        </tr>
+        <tr>
+            <td>regexp</td>
+            <td>0.229525</td>
+            <td>x55.66</td>
+            <td>4891</td>
+            <td>1000</td>
+            <td>1000</td>
+        </tr>
+        <tr>
+            <td>single_pass</td>
+            <td>6.491263</td>
+            <td>x1574.18</td>
+            <td>4891</td>
+            <td>1000</td>
+            <td>1000</td>
+        </tr>
+    </tbody>
+<table>
+
+
 ## Project structure
 
 ```text
@@ -92,14 +159,15 @@ main.py                   # Entry point.
 parsers.py                # Config parsing.
 replacers/
 ├── __init__.py
-├── aho_corasick.py       # Aho‑Corasick algorithm.
+├── aho_corasick.py       # Aho‑Corasick algorithms.
 ├── cascading.py          # Cascade replacing.
 ├── regexp.py             # Regexp sub replacing.
 ├── single_pass.py        # Single-pass replacing.
 ├── type_defs.py          # Common types.
 tests/
+├── make_datasets.py      # Make datasets files.
 ├── test_benchmark.py     # Benchmark comparison.
-├── test_replacers.py     # Test replacers.
-└── test_parsers.py       # Test parsing.
+├── test_parsers.py       # Test parsing.
+└── test_replacers.py     # Test replacers.
 datasets/                 # Sample files.
 ```
