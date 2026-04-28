@@ -5,7 +5,7 @@ from typing import Dict, Optional, Deque, List, Tuple, Iterator
 from .type_defs import Replacements, ReplaceResult
 
 
-Matches = List[Tuple[int, int, int, str]]
+Matches = List[Tuple[int, int, int, str]]  # start, end, priority, value
 
 
 def select_matches(line: str, matches: Matches) -> ReplaceResult:
@@ -316,7 +316,7 @@ class AhoCorasickReplacerC:
 
         matches: Matches = []
 
-        for end_index, (priority, key, value) in self.automaton.iter(line):
+        for end_index, (priority, key, value) in self._iterate(line):
             start_index = end_index - len(key) + 1
             matches.append((start_index, end_index, priority, value))
 
